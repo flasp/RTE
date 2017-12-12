@@ -1,0 +1,5 @@
+install.packages("ggplot2")
+install.packages('ggvis')
+install.packages('gridExtra')
+install.packages('readxl')
+install.packages('rgl')
