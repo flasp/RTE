@@ -6,10 +6,18 @@ nettoyage<-function(cheminFichier)
   
   #Lecture fichier
   data <- read.csv(cheminFichier, header=TRUE, sep=";")
-  noms<-labels(data)
-  noms[[2]][c(1,6,7,11,16,25,28,31,34,35,36)]<-c("Perimetre","PrevisionJmoins1","PrevisionJ","Nucleaire","Bioenergies","Fioul Cogen","Gaz Cogen","Hydraulique Fil de l\'eau Ecluse","Bioenergies Dechets","Bioenergies Biomasse","Bioenergies Biogaz")
-  names(data)<-noms[[2]]
+  
+  #changement noms catÃ©gorie et on retire les . pbtiques
+  noms<-names(data)
+  noms[c(1,6,7,11,16,25,28,31,34,35,36)]<-c("Perimetre","PrevisionJmoins1","PrevisionJ","Nucleaire","Bioenergies","Fioul Cogen","Gaz Cogen","Hydraulique Fil de l\'eau Ecluse","Bioenergies Dechets","Bioenergies Biomasse","Bioenergies Biogaz")
+  names(data)<-noms
+  
+  #on ote le warning Ã  la fin du fichier
   data<-data[-35137,]
+  
+
+  nom<-names(data)
+  
   
   #Separation donnees utiles
   vNA<-which(is.na(data$Consommation)==TRUE)
@@ -27,7 +35,7 @@ nettoyage<-function(cheminFichier)
 #   mini<-min(data$Consommation[vdate])-1000
 #   hours<-seq(from=0, to=23.5,by=0.5)
 #   
-#   #calcul prÃ©cision
+#   #calcul precision
 #   precis_Jmoins1<-(data$PrevisionJmoins1 - data$Consommation)/data$Consommation*100
 #   
 #   #Plot conso
@@ -36,11 +44,11 @@ nettoyage<-function(cheminFichier)
 #   #Ajout Prevision
 #   lines(hours, data$PrevisionJmoins1[vdate], type="b", col='red',xlab="",ylab="")
 #   
-#   #Ajout moyenne sur la journÃ©e
+#   #Ajout moyenne sur la journee
 #   moyenne<-mean(data$Consommation[vdate])
 #   lines(hours, rep(moyenne,48), col="black",xlab="",ylab="")
 #   
-#   #Ajout prÃ©cision
+#   #Ajout precision
 #   par(new = TRUE)
 #   #plot(precis_Jmoins1[1:48],ylim=c(-10,10),type="h",axes=FALSE)
 #   color<-rgb(0,0,1,alpha=0.2) #def couleur et transparence bar
@@ -85,7 +93,7 @@ stat.day<-function(date,data)
     ylab("Demande (MW)")+
     theme(legend.title = element_blank())+
     scale_x_discrete(breaks=c('00:00','03:00','06:00','09:00','12:00','15:00','18:00','21:00','23:00'),name="")
- 
+  
   #plot bar du mix energetique en fonction de l'heure
   p2<-ggplot(ecart,aes(x = Heures,y=value,fill=variable,group=variable)) +
     geom_bar(stat = 'identity',position='dodge') +
@@ -140,9 +148,10 @@ stat.year<-function(data)
   library(RColorBrewer)
   library(ggplot2)
   
-  #User input pour le choix de la catégorie
+  data.reduit<-subset(data,select=Date:Taux.de.Co2)
+  #User input pour le choix de la categorie
   {
-    categorie<-names(data)[3:length(names(data))]
+    categorie<-names(data.reduit)[3:length(names(data.reduit))]
     texte<-" Liste des choix possibles : \n"
     
     for (k in 1:length(categorie))
@@ -164,42 +173,43 @@ stat.year<-function(data)
   
   jour<-NULL
   moyenne<-NULL
-
+  
   if(is.bisextile(year)){
-  #calcul des moyennes pour une annee bissextile
+    #calcul des moyennes pour une annee bissextile
     for (k in 1:366)
     {
-      v_jour<-subset(extract,as.Date(Date,format='%d/%m/%Y')==as.Date(k,origine),select=Type)
+      v_jour<-as.matrix(subset(extract,as.Date(Date,format='%d/%m/%Y')==as.Date(k,origine),select=Type))
       jour<-c(jour,k)
-      moyenne<-c(moyenne,round(mean(v_jour[[1]],0)))
+      moyenne<-c(moyenne,mean(v_jour))
     }
-  
+    
     moy.an<-data.frame(Jour=format(as.Date(1:366,origine),'%d'),Mois=format(as.Date(1:366,origine),'%m'),Moyenne=moyenne)
-
+    
   }
   
   else {
-  #calcul des moyennes pour une annee classique
+    #calcul des moyennes pour une annee classique
     for (k in 1:365)
     {
-      v_jour<-subset(extract,as.Date(Date,format='%d/%m/%Y')==as.Date(k,origine),select=Type)
+      v_jour<-as.matrix(subset(extract,as.Date(Date,format='%d/%m/%Y')==as.Date(k,origine),select=Type))
       jour<-c(jour,k)
-      moyenne<-c(moyenne,round(mean(v_jour[[1]],0)))
+      moyenne<-c(moyenne,mean(v_jour))
     }
     
     moy.an<-data.frame(Jour=format(as.Date(1:365,origine),'%d'),Mois=format(as.Date(1:365,origine),'%m'),Moyenne=moyenne)
     
   }    
-
+  
   #definition du milieux pour l echelle gradient
   mid<-mean(moy.an$Moyenne) 
   
   #plot tiles
   ggplot(moy.an,aes(x=Jour,y=Mois)) +
-  geom_tile(aes(fill=Moyenne)) +
-  scale_fill_gradient2(midpoint = mid,low='blue',mid='white',high='red',name="Moyenne Jour\n (MW)") +
-  ggtitle(paste('Intensité de l\'utilisation sur l\'année : ',Type))
-
+    geom_tile(aes(fill=Moyenne)) +
+    scale_fill_gradient2(midpoint = mid,low='blue',mid='white',high='red',name="Moyenne Jour\n (MW)") +
+    ggtitle(paste('Intensite de l\'utilisation sur l\'annee : ',Type))
+  
+ #typeof(as.integer(v_jour))
 }
 
 
@@ -209,8 +219,10 @@ corr.year<-function(data)
   
   #User input
   
+  data.reduit<-subset(data,select=Date:Taux.de.Co2)
+  #User input pour le choix de la categorie
   {
-    categorie<-names(data)[3:length(names(data))]
+    categorie<-names(data.reduit)[3:length(names(data.reduit))]
     texte<-" Liste des choix possibles : \n"
     
     for (k in 1:length(categorie))
@@ -225,17 +237,20 @@ corr.year<-function(data)
     n2<-readline(prompt = "Quel est votre choix en ordonnee ? : ")
     n2<-as.integer(n2)
     
-    Abscisse<-categorie[n1]
-    Ordonnee<-categorie[n2]
+    A<-categorie[n1]
+    O<-categorie[n2]
   }
   
-  extract=subset(data,select=c(Abscisse,Ordonnee))
+
+  extract=subset(data.reduit,select=c(A,O))
+  names(extract)<-c("Abs","Ord")
   
-   ggplot(extract) +
-     geom_point(aes(x=Abscisse,y=Ordonnee))
-  
+  ggplot(extract,aes(x=Abs,y=Ord)) +
+    geom_point(color='lightblue') +
+    geom_smooth() +
+    ylab(O)+
+    xlab(A)
   
 }
-
 
 
