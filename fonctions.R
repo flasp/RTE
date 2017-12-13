@@ -27,7 +27,7 @@ nettoyage<-function(cheminFichier)
 #   mini<-min(data$Consommation[vdate])-1000
 #   hours<-seq(from=0, to=23.5,by=0.5)
 #   
-#   #calcul précision
+#   #calcul prÃ©cision
 #   precis_Jmoins1<-(data$PrevisionJmoins1 - data$Consommation)/data$Consommation*100
 #   
 #   #Plot conso
@@ -36,11 +36,11 @@ nettoyage<-function(cheminFichier)
 #   #Ajout Prevision
 #   lines(hours, data$PrevisionJmoins1[vdate], type="b", col='red',xlab="",ylab="")
 #   
-#   #Ajout moyenne sur la journée
+#   #Ajout moyenne sur la journÃ©e
 #   moyenne<-mean(data$Consommation[vdate])
 #   lines(hours, rep(moyenne,48), col="black",xlab="",ylab="")
 #   
-#   #Ajout précision
+#   #Ajout prÃ©cision
 #   par(new = TRUE)
 #   #plot(precis_Jmoins1[1:48],ylim=c(-10,10),type="h",axes=FALSE)
 #   color<-rgb(0,0,1,alpha=0.2) #def couleur et transparence bar
@@ -140,7 +140,7 @@ stat.year<-function(data)
   library(RColorBrewer)
   library(ggplot2)
   
-  #User input pour le choix de la cat�gorie
+  #User input pour le choix de la catégorie
   {
     categorie<-names(data)[3:length(names(data))]
     texte<-" Liste des choix possibles : \n"
@@ -198,10 +198,9 @@ stat.year<-function(data)
   ggplot(moy.an,aes(x=Jour,y=Mois)) +
   geom_tile(aes(fill=Moyenne)) +
   scale_fill_gradient2(midpoint = mid,low='blue',mid='white',high='red',name="Moyenne Jour\n (MW)") +
-  ggtitle(paste('Intensit� de l\'utilisation sur l\'ann�e : ',Type))
+  ggtitle(paste('Intensité de l\'utilisation sur l\'année : ',Type))
 
 }
-
 
 
 
