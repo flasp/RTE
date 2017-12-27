@@ -15,7 +15,7 @@ nettoyage<-function(cheminFichier)
   #on ote le warning à la fin du fichier
   data<-data[-35137,]
   
-
+  
   nom<-names(data)
   
   
@@ -25,38 +25,6 @@ nettoyage<-function(cheminFichier)
   print(paste(cheminFichier," : Nettoyage termine"))
   data_util
 }
-
-
-# graph_day<-function(date,data)
-# {
-#   #Initialisation des dates, maxi, mini et des heures pour le plot
-#   vdate<-which(data$Date==date)
-#   maxi<-max(data$Consommation[vdate])+1000
-#   mini<-min(data$Consommation[vdate])-1000
-#   hours<-seq(from=0, to=23.5,by=0.5)
-#   
-#   #calcul precision
-#   precis_Jmoins1<-(data$PrevisionJmoins1 - data$Consommation)/data$Consommation*100
-#   
-#   #Plot conso
-#   par(mar=c(5,4,4,4)+0.3)
-#   plot(hours,data$Consommation[vdate], type="b",ylim=c(mini,maxi), col='blue',xlab="Heure",ylab="Consommation")
-#   #Ajout Prevision
-#   lines(hours, data$PrevisionJmoins1[vdate], type="b", col='red',xlab="",ylab="")
-#   
-#   #Ajout moyenne sur la journee
-#   moyenne<-mean(data$Consommation[vdate])
-#   lines(hours, rep(moyenne,48), col="black",xlab="",ylab="")
-#   
-#   #Ajout precision
-#   par(new = TRUE)
-#   #plot(precis_Jmoins1[1:48],ylim=c(-10,10),type="h",axes=FALSE)
-#   color<-rgb(0,0,1,alpha=0.2) #def couleur et transparence bar
-#   barplot(precis_Jmoins1[vdate],ylim=c(-10,10),col=color, axes = FALSE, bty = "n", xlab = "", ylab = "")
-#   axis(side=4, at = c(-10:10))
-#   mtext("Ecart %", side=4, line=3) #titre axe droit
-#   print("Graphe termine")
-# }
 
 
 stat.day<-function(date,data)
@@ -130,17 +98,11 @@ stat.day<-function(date,data)
 }
 
 
-
-
-
 is.bisextile<-function(year)
 {
   #fonction de test de la bissextilite d une annee
   ((year%%4==0)&&(year%%100!=0))|(year%%400==0)
 }
-
-
-
 
 
 stat.year<-function(data)
@@ -209,13 +171,16 @@ stat.year<-function(data)
     scale_fill_gradient2(midpoint = mid,low='blue',mid='white',high='red',name="Moyenne Jour\n (MW)") +
     ggtitle(paste('Intensite de l\'utilisation sur l\'annee : ',Type))
   
- #typeof(as.integer(v_jour))
+  #typeof(as.integer(v_jour))
 }
 
 
 
 corr.year<-function(data)
 {
+  #package pour la fonction GAM et ses coefficients
+  library(nlme)
+  library(mgcv)
   
   #User input
   
@@ -241,7 +206,7 @@ corr.year<-function(data)
     O<-categorie[n2]
   }
   
-
+  
   extract=subset(data.reduit,select=c(A,O))
   names(extract)<-c("Abs","Ord")
   
@@ -253,4 +218,94 @@ corr.year<-function(data)
   
 }
 
+# corr.year2<-function(data)
+# {
+#   #Variante de la fonction corr.year qui prend en compte les moyennes quotidiennes au lieu des valeurs horaires
+#   #a la fin on plot corr.year et corr.year2 sur un meme tableau pour comparaison
+#   
+#   #On reduit le set de data aux valeurs utilisables
+#   
+#   data.reduit<-subset(data,select=Date:Taux.de.Co2)
+#   
+#   #On selectonne les valeurs comme dans corr.year + la date
+#   
+#   #User input pour le choix de la categorie
+#   {
+#     categorie<-names(data.reduit)[3:length(names(data.reduit))]
+#     texte<-" Liste des choix possibles : \n"
+#     
+#     for (k in 1:length(categorie))
+#     {
+#       texte<-paste(texte,k,"--->",categorie[k],'   \n')
+#     }
+#     
+#     cat(texte)
+#     n1<-readline(prompt = "Quel est votre choix en abscisse ? : ")
+#     n1<-as.integer(n1)
+#     
+#     n2<-readline(prompt = "Quel est votre choix en ordonnee ? : ")
+#     n2<-as.integer(n2)
+#     
+#     A<-categorie[n1]
+#     O<-categorie[n2]
+#   }
+#   
+#   extract.full=subset(data.reduit,select=c('Date',A,O))
+#   names(extract.full)<-c("Date","Abs","Ord")
+#   
+#   # on calcule les valeurs moyennes
+#   
+#   #Identification de l annee des donnees
+#   year<-as.numeric(format(as.Date(extract.full$Date[1],format='%d/%m/%Y'),'%Y'))
+#   origine<-paste(toString(year-1),'-12-31',sep='')
+#   
+#   moy.A<-NULL
+#   moy.O<-NULL
+#   
+#   if(is.bisextile(year)){
+#     #calcul des moyennes pour une annee bissextile
+#     for (k in 1:366)
+#     {
+#       v.jour<-as.matrix(subset(extract.full,as.Date(Date,format='%d/%m/%Y')==as.Date(k,origine),select=c("Abs","Ord")))
+#       moy.A<-c(moy.A,mean(v.jour[,1]))
+#       moy.O<-c(moy.O,mean(v.jour[,2]))
+#     }
+#     
+#     extract.moy<-data.frame(Abs=moy.A,Ord=moy.O)
+#     
+#   }
+#   
+#   else {
+#     #calcul des moyennes pour une annee classique
+#     for (k in 1:365)
+#     {
+#       v.jour<-as.matrix(subset(extract.full,as.Date(Date,format='%d/%m/%Y')==as.Date(k,origine),select=c("Abs","Ord")))
+#       moy.A<-c(moy.A,mean(v_jour[,1]))
+#       moy.O<-c(moy.O,mean(v_jour[,2]))
+#     }
+#     
+#     extract.moy<-data.frame(Abs=moy.A,Ord=moy.O)
+#     
+#   }
+#   
+#   #on cree les deux ggplot et on les plot ensemble
+#   
+#   p1<-ggplot(extract.full,aes(x=Abs,y=Ord)) +
+#     geom_point(color='lightblue') +
+#     geom_smooth() +
+#     ylab(O)+
+#     xlab(A)
+#   
+#   p2<-ggplot(extract.moy,aes(x=Abs,y=Ord)) +
+#     geom_point(color='lightblue') +
+#     geom_smooth() +
+#     ylab(O)+
+#     xlab(A)
+#   
+#   g1<-ggplotGrob(p1)
+#   g2<-ggplotGrob(p2)
+#   
+#   grid.arrange(g1,g2, ncol=2)
+#   
+# }
 
